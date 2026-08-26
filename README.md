@@ -9,10 +9,11 @@ produtos; alterações daqui NÃO voltam pra lá.
 | Workflow | Uso |
 |---|---|
 | `deploy-firebase-api.yml` | padrão (maioria das APIs) |
-| `deploy-firebase-api-with-domain-functions.yml` | acls, payments |
-| `deploy-firebase-api-with-siteid.yml` | core |
-| `deploy-firebase-api-with-redis.yml` | settings |
-| `deploy-firebase-api-4gb.yml` | variante 4GB (DATABASE_URL por TCP) |
+| `deploy-firebase-api-with-domain-functions.yml` | acls |
+| `deploy-firebase-api-with-domain-functions-prebuilt.yml` | payments (compila no runner, sem devDeps no Cloud Build) |
+| `deploy-firebase-api-with-siteid.yml` | genesis |
+| `deploy-firebase-api-with-redis.yml` | ead, pedagogico, settings, templates, v3-peoples |
+| `deploy-firebase-api-4gb.yml` | atendimento (variante 4GB, DATABASE_URL por TCP) |
 
 ## Diferenças em relação ao kodigilo-deploy
 
