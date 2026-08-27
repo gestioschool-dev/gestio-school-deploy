@@ -132,6 +132,7 @@ jobs:
             RECAPTCHA_ENABLED:${{ steps.env.outputs.project_id }}/${{ env.ENV }}RECAPTCHA_ENABLED
             RECAPTCHA_SITE_KEY:${{ steps.env.outputs.project_id }}/${{ env.ENV }}RECAPTCHA_SITE_KEY
             RECAPTCHA_MIN_SCORE:${{ steps.env.outputs.project_id }}/${{ env.ENV }}RECAPTCHA_MIN_SCORE
+            SENDGRID_API_KEY:${{ steps.env.outputs.project_id }}/${{ env.ENV }}SENDGRID_API_KEY
 
       - name: Write file yaml env
         uses: 'DamianReeves/write-file-action@master'
@@ -156,6 +157,7 @@ jobs:
             RECAPTCHA_ENABLED: "${{ steps.secret.outputs.RECAPTCHA_ENABLED }}"
             RECAPTCHA_SITE_KEY: "${{ steps.secret.outputs.RECAPTCHA_SITE_KEY }}"
             RECAPTCHA_MIN_SCORE: "${{ steps.secret.outputs.RECAPTCHA_MIN_SCORE }}"
+            SENDGRID_API_KEY: "${{ steps.secret.outputs.SENDGRID_API_KEY }}"
             REDIS: |-
               ${{ steps.secret.outputs.REDIS }}
 
