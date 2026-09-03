@@ -39,6 +39,13 @@ on:
         required: false
         type: boolean
         default: false
+      withTenantAssert:
+        # Lê ${ENV}TENANT_ASSERT_STRICT do Secret Manager e injeta na function
+        # (vínculo token↔escola do @gestio-school/pkg + helps/tenant-assert do
+        # payments). O secret precisa existir nos 4 projetos quando ligado.
+        required: false
+        type: boolean
+        default: false
       dbConnLimit:
         # Era fixo "5" direto na DATABASE_URL_SOCKET (linha abaixo); virou
         # input pra ficar explícito/consistente com o with-redis.yml. Default
@@ -158,6 +165,14 @@ jobs:
             RECAPTCHA_SITE_KEY:${{ steps.env.outputs.project_id }}/${{ env.ENV }}RECAPTCHA_SITE_KEY
             RECAPTCHA_MIN_SCORE:${{ steps.env.outputs.project_id }}/${{ env.ENV }}RECAPTCHA_MIN_SCORE
 
+      - name: Acessar secret do vínculo token↔escola (opcional)
+        id: tenant_assert_secret
+        if: ${{ inputs.withTenantAssert }}
+        uses: 'google-github-actions/get-secretmanager-secrets@v2'
+        with:
+          secrets: |-
+            TENANT_ASSERT_STRICT:${{ steps.env.outputs.project_id }}/${{ env.ENV }}TENANT_ASSERT_STRICT
+
       - name: Montar DATABASE_URL via socket do Cloud SQL
         run: |
           # Remove "@host" da credencial (fica user:pass) para conectar via socket,
@@ -204,6 +219,15 @@ jobs:
           RECAPTCHA_ENABLED: "${{ steps.recaptcha_secret.outputs.RECAPTCHA_ENABLED }}"
           RECAPTCHA_SITE_KEY: "${{ steps.recaptcha_secret.outputs.RECAPTCHA_SITE_KEY }}"
           RECAPTCHA_MIN_SCORE: "${{ steps.recaptcha_secret.outputs.RECAPTCHA_MIN_SCORE }}"
+          EOF
+
+      - name: Append TENANT_ASSERT_STRICT no env.yaml (opcional)
+        if: ${{ inputs.withTenantAssert }}
+        run: |
+          # mesmo guard de newline do bloco do reCAPTCHA acima
+          if [ -s ./env.yaml ] && [ -n "$(tail -c 1 ./env.yaml)" ]; then echo >> ./env.yaml; fi
+          cat >> ./env.yaml <<EOF
+          TENANT_ASSERT_STRICT: "${{ steps.tenant_assert_secret.outputs.TENANT_ASSERT_STRICT }}"
           EOF
 
       - name: Write file firebase account DEV
