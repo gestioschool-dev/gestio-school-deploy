@@ -134,6 +134,8 @@ jobs:
             RECAPTCHA_MIN_SCORE:${{ steps.env.outputs.project_id }}/${{ env.ENV }}RECAPTCHA_MIN_SCORE
             SENDGRID_API_KEY:${{ steps.env.outputs.project_id }}/${{ env.ENV }}SENDGRID_API_KEY
             WARNINGS_CRON_TOKEN:${{ steps.env.outputs.project_id }}/${{ env.ENV }}WARNINGS_CRON_TOKEN
+            INTERNAL_API_SECRET:${{ steps.env.outputs.project_id }}/${{ env.ENV }}INTERNAL_API_SECRET
+            SERVICE_ACCOUNT_TENANT_STRICT:${{ steps.env.outputs.project_id }}/${{ env.ENV }}SERVICE_ACCOUNT_TENANT_STRICT
 
       - name: Write file yaml env
         uses: 'DamianReeves/write-file-action@master'
@@ -160,6 +162,8 @@ jobs:
             RECAPTCHA_MIN_SCORE: "${{ steps.secret.outputs.RECAPTCHA_MIN_SCORE }}"
             SENDGRID_API_KEY: "${{ steps.secret.outputs.SENDGRID_API_KEY }}"
             WARNINGS_CRON_TOKEN: "${{ steps.secret.outputs.WARNINGS_CRON_TOKEN }}"
+            INTERNAL_API_SECRET: "${{ steps.secret.outputs.INTERNAL_API_SECRET }}"
+            SERVICE_ACCOUNT_TENANT_STRICT: "${{ steps.secret.outputs.SERVICE_ACCOUNT_TENANT_STRICT }}"
             REDIS: |-
               ${{ steps.secret.outputs.REDIS }}
 
