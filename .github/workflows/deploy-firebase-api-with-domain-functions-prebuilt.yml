@@ -154,6 +154,8 @@ jobs:
             SUBNET:${{ steps.env.outputs.project_id }}/${{ env.ENV }}SUBNET
             REDIS:${{ steps.env.outputs.project_id }}/${{ env.ENV }}REDIS
             DB_INSTANCE_CONNECTION_NAME:${{ steps.env.outputs.project_id }}/${{ env.ENV }}DB_INSTANCE_CONNECTION_NAME
+            INTERNAL_API_SECRET:${{ steps.env.outputs.project_id }}/${{ env.ENV }}INTERNAL_API_SECRET
+            SERVICE_ACCOUNT_TENANT_STRICT:${{ steps.env.outputs.project_id }}/${{ env.ENV }}SERVICE_ACCOUNT_TENANT_STRICT
 
       - name: Acessar secrets do reCAPTCHA (opcional)
         id: recaptcha_secret
@@ -204,6 +206,8 @@ jobs:
             APPID: "${{ steps.secret.outputs.APPID }}"
             MEASUREMENTID: "${{ steps.secret.outputs.MEASUREMENTID }}"
             HTTP: https
+            INTERNAL_API_SECRET: "${{ steps.secret.outputs.INTERNAL_API_SECRET }}"
+            SERVICE_ACCOUNT_TENANT_STRICT: "${{ steps.secret.outputs.SERVICE_ACCOUNT_TENANT_STRICT }}"
             REDIS: |-
               ${{ steps.secret.outputs.REDIS }}
 

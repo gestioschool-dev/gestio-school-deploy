@@ -130,6 +130,8 @@ jobs:
             SUBNET:${{ steps.env.outputs.project_id }}/${{ env.ENV }}SUBNET
             SITEID:${{ steps.env.outputs.project_id }}/${{ env.ENV }}SITEID
             DB_INSTANCE_CONNECTION_NAME:${{ steps.env.outputs.project_id }}/${{ env.ENV }}DB_INSTANCE_CONNECTION_NAME
+            INTERNAL_API_SECRET:${{ steps.env.outputs.project_id }}/${{ env.ENV }}INTERNAL_API_SECRET
+            SERVICE_ACCOUNT_TENANT_STRICT:${{ steps.env.outputs.project_id }}/${{ env.ENV }}SERVICE_ACCOUNT_TENANT_STRICT
             RECAPTCHA_ENABLED:${{ steps.env.outputs.project_id }}/${{ env.ENV }}RECAPTCHA_ENABLED
             RECAPTCHA_SITE_KEY:${{ steps.env.outputs.project_id }}/${{ env.ENV }}RECAPTCHA_SITE_KEY
             RECAPTCHA_MIN_SCORE:${{ steps.env.outputs.project_id }}/${{ env.ENV }}RECAPTCHA_MIN_SCORE
@@ -168,6 +170,8 @@ jobs:
             MEASUREMENTID: "${{ steps.secret.outputs.MEASUREMENTID }}"
             SITEID: '${{ steps.secret.outputs.SITEID }}'
             HTTP: https
+            INTERNAL_API_SECRET: "${{ steps.secret.outputs.INTERNAL_API_SECRET }}"
+            SERVICE_ACCOUNT_TENANT_STRICT: "${{ steps.secret.outputs.SERVICE_ACCOUNT_TENANT_STRICT }}"
             RECAPTCHA_ENABLED: "${{ steps.secret.outputs.RECAPTCHA_ENABLED }}"
             RECAPTCHA_SITE_KEY: "${{ steps.secret.outputs.RECAPTCHA_SITE_KEY }}"
             RECAPTCHA_MIN_SCORE: "${{ steps.secret.outputs.RECAPTCHA_MIN_SCORE }}"
