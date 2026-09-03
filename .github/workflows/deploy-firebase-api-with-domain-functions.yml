@@ -172,6 +172,9 @@ jobs:
             DOMAIN: "${{ steps.secret.outputs.DOMAIN }}/${{env.nomeDaFuncao}}"
             DOMAIN_FUNCTIONS: "${{ steps.secret.outputs.DOMAIN }}"
             FUNCTION: ${{env.nomeDaFuncao}}
+            # Functions Framework carimba cada console.* com labels.execution_id e trace
+            # (JSON estruturado). Sem isso os logs de requests concorrentes se misturam.
+            LOG_EXECUTION_ID: "true"
             APIKEY: "${{ steps.secret.outputs.APIKEY }}"
             AUTHDOMAIN: "${{ steps.secret.outputs.AUTHDOMAIN }}"
             PROJECTID: "${{ steps.env.outputs.project_id }}"
