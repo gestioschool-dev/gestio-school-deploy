@@ -39,3 +39,22 @@ APIs que geram arquivo/relatório e precisem de mais folga sobem os inputs no
 > **Atenção:** para os repos da org usarem estes workflows, em
 > Settings → Actions → General → Access deste repo deve estar
 > "Accessible from repositories owned by the organization".
+
+## Runner self-hosted (Mac mini `mac03`)
+
+Todos os workflows têm um job `probe` (ubuntu-latest, segundos) que consulta a
+API de runners da org: se houver runner `macOS` online (esperando até 2 min),
+o `build_and_deploy` roda em `[self-hosted, macOS, ARM64]`; senão cai para
+`ubuntu-latest`. Requisitos:
+
+- secret `RUNNERS_READ_TOKEN` (no repo da API ou na org): PAT fine-grained
+  com resource owner na org e permissão de organização **Self-hosted runners:
+  Read-only**. Os callers usam `secrets: inherit`, então o reusável lê o
+  secret sem declaração nem repasse — o caller não decide nada sobre runner.
+  Sem o secret tudo roda no GitHub, com warning na sonda;
+- o Mac mini não precisa de gcloud instalado: o `setup-gcloud` baixa o SDK
+  para o tool cache do runner (só o primeiro run paga o download);
+- os scripts em `scripts/` são bash 3.2/BSD-compatíveis (macOS); o `sed -i`
+  nos workflows usa sufixo `.bak` pelo mesmo motivo;
+- `env.yaml` e `firebase.json` são apagados ao final no self-hosted, já que o
+  workspace persiste entre runs.
