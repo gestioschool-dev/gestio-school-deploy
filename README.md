@@ -43,9 +43,13 @@ APIs que geram arquivo/relatório e precisem de mais folga sobem os inputs no
 ## Runner self-hosted (Mac mini `mac03`)
 
 Todos os workflows têm um job `probe` (ubuntu-latest, segundos) que consulta a
-API de runners da org: se houver runner `macOS` online (esperando até 2 min),
-o `build_and_deploy` roda em `[self-hosted, macOS, ARM64]`; senão cai para
-`ubuntu-latest`. Requisitos:
+API de runners da org e decide onde o `build_and_deploy` roda:
+
+- alguma instância `macOS` online e **livre** → `[self-hosted, macOS, ARM64]`;
+- todas online mas **ocupadas** → `ubuntu-latest` na hora (não espera fila);
+- nenhuma online → espera até 2 min o mini aparecer, depois `ubuntu-latest`.
+
+Requisitos:
 
 - secret `RUNNERS_READ_TOKEN` (no repo da API ou na org): PAT fine-grained
   com resource owner na org e permissão de organização **Self-hosted runners:
