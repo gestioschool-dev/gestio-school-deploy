@@ -139,6 +139,32 @@ jobs:
       projeto: ${{ inputs.projeto }}
 
     steps:
+      # Controle da pasta _work no Mac mini (par do último step do job). Cada run
+      # deste repo deixa um marcador em ~/.gha-work-cleanup/<owner>/<repo>/runs
+      # e registra em `paths` a pasta _work/<repo> da instância do runner em que
+      # caiu; o último run a terminar apaga todas elas. O lock (mkdir atômico)
+      # impede que uma limpeza em curso apague a pasta de um run recém-começado.
+      # No runner do GitHub o step é pulado.
+      - name: Registrar run no Mac mini (controle do _work)
+        if: runner.os == 'macOS'
+        run: |
+          BASE="$HOME/.gha-work-cleanup/$GITHUB_REPOSITORY"
+          LOCK="$BASE/.lock"
+          mkdir -p "$BASE/runs"
+          GOT=0
+          for i in $(seq 1 90); do
+            if mkdir "$LOCK" 2>/dev/null; then GOT=1; break; fi
+            # lock parado há mais de 10 min ficou de um run que morreu segurando-o
+            if [ -n "$(find "$LOCK" -maxdepth 0 -mmin +10 2>/dev/null)" ]; then rm -rf "$LOCK"; fi
+            sleep 1
+          done
+          [ "$GOT" = 1 ] || echo "::warning::Lock do _work ocupado há 90s — registrando mesmo assim."
+          WORK_DIR=$(dirname "$GITHUB_WORKSPACE")
+          echo "$WORK_DIR" > "$BASE/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          grep -qxF "$WORK_DIR" "$BASE/paths" 2>/dev/null || echo "$WORK_DIR" >> "$BASE/paths"
+          if [ "$GOT" = 1 ]; then rmdir "$LOCK"; fi
+          echo "Run registrado em $WORK_DIR — $(ls "$BASE/runs" | wc -l | tr -d ' ') run(s) deste repo em andamento no Mac mini."
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -353,3 +379,62 @@ jobs:
       - name: Limpar arquivos sensíveis (self-hosted)
         if: always() && runner.os == 'macOS'
         run: rm -f ./env.yaml ./firebase.json
+
+      # Limpeza da pasta _work no Mac mini. O workspace persiste entre runs e cada
+      # repo acumula clone + node_modules + dist em CADA instância do runner em que
+      # já rodou — é o que lota o disco. Só mexe na pasta _work/<repo> DESTE repo
+      # (nunca em _tool, _actions, _temp nem na pasta de outro repo) e só quando
+      # este é o último run do repo em andamento no Mac mini: com dev/qa/sandbox/
+      # main rodando juntos, os três primeiros a terminar não apagam nada e o
+      # último apaga tudo. Marcador com mais de 6 h (job morto sem rodar o
+      # always()) é descartado para não travar a limpeza para sempre. A pasta do
+      # próprio run é esvaziada mas mantida: os post-steps das actions ainda rodam
+      # com ela como cwd. O próximo run recria tudo (clone + npm ci; o ~/.npm
+      # persiste, então o install continua rápido).
+      - name: Limpar _work do projeto no Mac mini (só no último run)
+        if: always() && runner.os == 'macOS'
+        run: |
+          BASE="$HOME/.gha-work-cleanup/$GITHUB_REPOSITORY"
+          LOCK="$BASE/.lock"
+          ME="$BASE/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "$BASE/runs"
+          GOT=0
+          for i in $(seq 1 90); do
+            if mkdir "$LOCK" 2>/dev/null; then GOT=1; break; fi
+            if [ -n "$(find "$LOCK" -maxdepth 0 -mmin +10 2>/dev/null)" ]; then rm -rf "$LOCK"; fi
+            sleep 1
+          done
+          rm -f "$ME"
+          if [ "$GOT" != 1 ]; then
+            echo "::warning::Lock do _work ocupado há 90s — limpeza fica para o próximo run."
+            exit 0
+          fi
+          find "$BASE/runs" -type f -mmin +360 -exec rm -f {} + 2>/dev/null || true
+          OUTROS=$(ls "$BASE/runs" | wc -l | tr -d ' ')
+          if [ "$OUTROS" != 0 ]; then
+            echo "Ainda há $OUTROS run(s) deste repo em andamento no Mac mini — a limpeza fica para o último."
+            rmdir "$LOCK"
+            exit 0
+          fi
+          MINE=$(dirname "$GITHUB_WORKSPACE")
+          while IFS= read -r DIR; do
+            [ -n "$DIR" ] && [ -d "$DIR" ] || continue
+            # Só <runner>/_work/<pasta-do-repo>: nada que comece com "_" (_tool,
+            # _actions, _temp, _PipelineMapping são do runner) e nada fora de _work.
+            case "$DIR" in
+              */_work/_*)  echo "::warning::Ignorando pasta interna do runner: $DIR"; continue ;;
+              */_work/*/*) echo "::warning::Ignorando caminho fora do padrão _work/<repo>: $DIR"; continue ;;
+              */_work/*)   ;;
+              *)           echo "::warning::Ignorando caminho fora de _work: $DIR"; continue ;;
+            esac
+            echo "Apagando $DIR ($(du -sh "$DIR" 2>/dev/null | cut -f1))"
+            if [ "$DIR" = "$MINE" ]; then
+              # esvazia, mas preserva o $GITHUB_WORKSPACE (vazio) para os post-steps
+              find "$DIR" -mindepth 1 -maxdepth 1 ! -path "$GITHUB_WORKSPACE" -exec rm -rf {} + 2>/dev/null || true
+              find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+            else
+              rm -rf "$DIR"
+            fi
+          done < "$BASE/paths"
+          rmdir "$LOCK"
+          echo "Disco livre no Mac mini: $(df -h "$HOME" | awk 'NR==2{print $4}')"

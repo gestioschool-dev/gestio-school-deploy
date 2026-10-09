@@ -62,3 +62,36 @@ Requisitos:
   nos workflows usa sufixo `.bak` pelo mesmo motivo;
 - `env.yaml` e `firebase.json` são apagados ao final no self-hosted, já que o
   workspace persiste entre runs.
+
+### Limpeza da pasta `_work` (disco do Mac mini)
+
+O workspace do runner persiste entre runs, e cada repo acumula clone +
+`node_modules` + `dist` em **cada instância** do runner em que já rodou — era o
+que lotava o disco. Todos os workflows têm dois steps que só rodam no macOS
+(no GitHub são pulados):
+
+- **Registrar run** (primeiro step): grava um marcador em
+  `~/.gha-work-cleanup/<owner>/<repo>/runs/<run_id>-<attempt>` e anota em
+  `paths` a pasta `_work/<repo>` da instância em que o run caiu;
+- **Limpar `_work`** (último step, `always()`): remove o próprio marcador e,
+  **só se não sobrou nenhum outro** (ou seja, este é o último run do repo em
+  andamento no Mac mini), apaga a pasta `_work/<repo>` em todas as instâncias
+  anotadas em `paths`. Com dev/qa/sandbox/main rodando juntos, os três
+  primeiros a terminar não mexem em nada e o último limpa tudo.
+
+Garantias:
+
+- só toca na pasta do próprio repo: nunca em `_tool`, `_actions`, `_temp`,
+  `_PipelineMapping` nem na pasta de outro repo (checagem do caminho antes do
+  `rm -rf`);
+- a pasta do run corrente é esvaziada mas mantida — os post-steps das actions
+  (checkout, auth) ainda rodam com ela como cwd;
+- um lock (`mkdir` atômico, descartado se parado há mais de 10 min) impede que
+  uma limpeza em curso apague a pasta de um run que acabou de começar;
+- marcador com mais de 6 h (job morto sem rodar o `always()`) é ignorado para
+  não travar a limpeza para sempre;
+- o próximo run paga clone completo + `npm ci`; o `~/.npm` persiste, então o
+  install continua rápido.
+
+Para outros repos que usam o Mac mini (frontend, portaria-ja) a mesma dupla de
+steps precisa ser copiada para os workflows deles — a coordenação é por repo.
